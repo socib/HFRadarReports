@@ -11,20 +11,21 @@ class HFReportGenerator:
         self.doc = None
         self.set_up_document()
         HFRadar(self.year, self.month, self.doc)
+        #self.doc.generate_tex()
         self.doc.generate_pdf(extra_compiler_args='--xelatex')
 
     def write_introduction(self):
         with self.doc.create(Section('Introduction', numbering=False)):
-            self.doc.append('The Fixed Stations monthly reports are generated automatically and are based on the'
-                            ' information available in the thredds server for the fixed stations managed by SOCIB.')
-            self.doc.append('The selection of variables is based upon the list of important variables from the SOCIB'
-                            ' DataDiscovery Service.')
-            self.doc.append('For each station, the report presents:')
+            self.doc.append('The HF Radar monthly reports are generated automatically and are based on the'
+                            ' information available in the thredds server for the HF Radar managed by SOCIB.')
+            self.doc.append('The report presents:')
             with self.doc.create(Itemize()) as itemize:
-                itemize.add_item('A data summary describing the data availability, quality flags, mean and extremal'
-                                 ' values over the period of interest')
-                itemize.add_item('Plots of time series for the selected variables: time series with all the data points'
-                                 ' with their associated quality flag and time series displaying only the good data')
+                itemize.add_item('Monthly means of the direction vectors, statistics (time series and data tables) as'
+                                 ' well as comparison graphs at the closest grid point compared to the Ibiza Buoy'
+                                 ' managed by SOCIB.')
+                itemize.add_item('Besides the temporal and spatial availability of the data available, figures with'
+                                 ' accepted thresholds are shown as well as a histogram representing the amount of'
+                                 ' radial files per 10 days which are available.')
 
     def write_title_page(self):
         self.doc.append(NoEscape(r'\thispagestyle{empty}\begin{titlepage}\centering'))
@@ -64,7 +65,7 @@ class HFReportGenerator:
 
         self.doc.preamble.append(NoEscape(r'\definecolor{bluesocib}{rgb}{0.3411,0.7804,0.804}'
                                           r'\sectionfont{\color{bluesocib}}'))
-        self.doc.preamble.append(NoEscape(r'\title{SOCIB Fixed Station Data Report}'))
+        self.doc.preamble.append(NoEscape(r'\title{SOCIB HF Radar Data Report}'))
         self.doc.preamble.append(NoEscape(r'\author{SOCIB Data Center}'))
         self.doc.preamble.append(NoEscape(r'\date{\today}'))
         self.doc.preamble.append(NoEscape(r'\ddmmyyyydate'))
@@ -102,8 +103,6 @@ class HFReportGenerator:
         self.doc.append(NoEscape(r'\pagebreak'))
         self.doc.append(NoEscape(r'\tableofcontents'))
         self.doc.append(NoEscape(r'\pagebreak'))
-        with self.doc.create(Section('test')):
-            self.doc.append('Test')
 
 
 def main():
