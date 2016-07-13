@@ -35,6 +35,10 @@ class _Settings(object):
         return self._galf_path
 
     @property
+    def totals_path(self):
+        return self._totals_path
+
+    @property
     def filesize_threshold(self):
         return [self._galf_filesize_threshold, self._form_filesize_threshold, self._total_filesize_threshold]
 
@@ -76,6 +80,7 @@ class _Settings(object):
         ]
         self._form_path = '/home/radar/data_rt/radar_system_eivissa/SCB-CODARSSSITE002/raw_archive/'
         self._galf_path = '/home/radar/data_rt/radar_system_eivissa/SCB-CODARSSSITE001/raw_archive/'
+        self._totals_path = '/home/radar/data_rt/radar_system_eivissa/SCB-CODARSSPROC001/raw_archive/'
         self._galf_filesize_threshold = 165.0
         self._form_filesize_threshold = 110.0
         self._total_filesize_threshold = 60

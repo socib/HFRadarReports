@@ -26,6 +26,9 @@ class HFReportGenerator:
                 itemize.add_item('Besides the temporal and spatial availability of the data available, figures with'
                                  ' accepted thresholds are shown as well as a histogram representing the amount of'
                                  ' radial files per 10 days which are available.')
+                itemize.add_item('All quiver (also knowns as feather or stick) graphs are represented in Oceanographic'
+                                 ' Convention (Angle N 0 degree represents the current originating in South and flowing'
+                                 ' to North.')
 
     def write_title_page(self):
         self.doc.append(NoEscape(r'\thispagestyle{empty}\begin{titlepage}\centering'))
