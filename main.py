@@ -21,8 +21,8 @@ class HFReportGenerator:
             self.doc.append('The report presents:')
             with self.doc.create(Itemize()) as itemize:
                 itemize.add_item('Monthly means of the direction vectors, statistics (time series and data tables) as'
-                                 ' well as comparison graphs at the closest grid point compared to the Ibiza Buoy'
-                                 ' managed by SOCIB.')
+                                 ' well as comparison graphs at the closest grid point compared to the Ibiza Channel'
+                                 ' Buoy managed by SOCIB.')
                 itemize.add_item('Besides the temporal and spatial availability of the data available, figures with'
                                  ' accepted thresholds are shown as well as a histogram representing the amount of'
                                  ' radial files per 10 days which are available.')
