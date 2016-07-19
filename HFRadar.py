@@ -93,10 +93,12 @@ class HFRadar:
             self.doc.append(NoEscape(r'\clearpage'))
 
     def do_processing(self):
-        sections = [['Monthly Mean Direction Plot', self.monthly_mean],
+        # Comment sections for debugging.
+        sections = [
+                    ['Monthly Surface Current Pattern', self.monthly_mean],
                     ['Temporal Availability', self.temporal_availability],
-                    ['Time Series at Closest Buoy Ibiza Grid Point', self.timeseries_at_buoy_ibiza],
-                    ['Data Tables at Closest Buoy Ibiza Grid Point', self.tables_at_buoy_ibiza],
+                    ['Time Series at the grid point closest to the Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
+                    ['Data Tables at the grid point closest to the Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
                     ['Comparison Graphs', self.comparison_radar_buoy],
                     ['U and V Components Comparisons', self.u_v_comparison],
                     ['Spatial Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
@@ -105,9 +107,10 @@ class HFRadar:
                     ['Percent Filesize above Threshold', self.filesize_threshold],
                     ['Statistics from QC Variables', self.compute_statistics],
                     ['Threshold Graphs', self.create_threshold_graphs],
-                    ['Histogram Radial Files per 10 Days.', self.create_histogram],
-                    ['Tidal Analysis', self.harmonic_analysis],
-                    ['Energy Spectra', self.create_power_spectrum]]
+                    #['Histogram Radial Files per 10 Days.', self.create_histogram],
+                    #['Tidal Analysis', self.harmonic_analysis],
+                    ['Energy Spectra', self.create_power_spectrum]
+                    ]
         for section in sections:
             self.write_section(section[0], section[1])
 
@@ -117,12 +120,17 @@ class HFRadar:
         u_mean = get_temporal_mean_from_grid(get_data_array(self.variables["U"]))
         v_mean = get_temporal_mean_from_grid(get_data_array(self.variables["V"]))
         np_longrid, np_langrid = np.meshgrid(self.lon, self.lat)
-        hf_monthly_mean_direction_plot(self.doc, u_mean, v_mean, np_longrid, np_langrid, self.high_res_basemap)
+
+        buoy_lat, buoy_lon = get_data_array(self.buoy_variables["LAT"]), get_data_array(self.buoy_variables["LON"])
+        self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, buoy_lat, buoy_lon)
+
+        hf_monthly_mean_direction_plot(self.doc, u_mean, v_mean, np_longrid, np_langrid, self.high_res_basemap,
+                                       buoy_lat, buoy_lon)
 
     def tables_at_buoy_ibiza(self):
         variables_of_interest = c.settings.close_to_buoy_statistics_variable_names
         self.doc.append('Summarising data tables for the variables at the closest grid point respective to the'
-                        ' Ibiza Buoy.')
+                        ' Ibiza Channel Buoy.')
         for v in variables_of_interest:
             variable = self.root.variables[v]
             variable_data, variable_dim = self.get_closest_grid_data(variable)
@@ -167,14 +175,16 @@ class HFRadar:
         # TODO: clean that mess... well that happens if you stuff something like that in 10 minutes together kriete
         # Note: they are sharing the amplifiers here currently
         buoy_lat, buoy_lon = get_data_array(self.buoy_variables["LAT"]), get_data_array(self.buoy_variables["LON"])
-        self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, buoy_lat, buoy_lon)
-        self.doc.append('Closest grid point LAT: %.6f' % self.lat[self.closest_lat_idx] + ' degree\n')
-        self.doc.append('Closest grid point LON: %.6f' % self.lon[self.closest_lon_idx] + ' degree\n\n')
+        # self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, buoy_lat, buoy_lon)
+        self.doc.append(NoEscape('Closest grid point LAT: %.6f' % self.lat[self.closest_lat_idx] +
+                                 r'$^{\circ}$N' + '\n'))
+        self.doc.append(NoEscape('Closest grid point LON: %.6f' % self.lon[self.closest_lon_idx] +
+                                 r'$^{\circ}$E' + '\n\n'))
         variables_of_interest = ['U', 'V', 'WSPE', 'WSPE_DIR', 'U_QAL', 'V_QAL', 'COVARIANCE_QAL']
         self.doc.append('Represents the variables ' + str(variables_of_interest) + ' at the closest grid point'
-                                                                                   ' respective to the Ibiza Buoy and,'
-                                                                                   ' if available, the corresponding'
-                                                                                   ' buoy data.')
+                                                                                   ' respective to the Ibiza Channel'
+                                                                                   ' Buoy and, if available, the'
+                                                                                   ' corresponding buoy data.')
         buoy_time = get_data_array(self.buoy_root["time"])
         same_idx = get_same_idx(self.time, buoy_time)
         time_filled = transform_to_full_time(self.time, buoy_time)
@@ -203,7 +213,7 @@ class HFRadar:
                                                                                          buoy_spe_data, same_idx)
                 plot_quiver_direction_overlapping(self.doc, filled_conv_time, cur_data_filled,
                                                   'Comparison of Directions from HF Radar Closest Grid Point (bottom)'
-                                                  ' and Ibiza Buoy (top)', upper_direction=buoy_dir_data_filled,
+                                                  ' and Ibiza Channel Buoy (top)', upper_direction=buoy_dir_data_filled,
                                                   lower_amplifier=amplifier_variable_filled,
                                                   input_month_title=self.month_str + ' ' + str(self.year),
                                                   upper_amplifier=buoy_spe_data_filled)
@@ -236,7 +246,7 @@ class HFRadar:
                     # combine idx from hf and buoy combined idx
                     plot_quiver_direction_overlapping(self.doc, filled_conv_time, cur_data_filled,
                                                       'Comparison of Directions from HF Radar Closest'
-                                                      ' Grid Point (bottom) and Ibiza Buoy (top)'
+                                                      ' Grid Point (bottom) and Ibiza Channel Buoy (top)'
                                                       ' GOOD DATA ONLY', buoy_dir_data_filled,
                                                       lower_amplifier=amplifier_variable_filled,
                                                       input_month_title=self.month_str + ' ' + str(self.year),
@@ -245,9 +255,9 @@ class HFRadar:
                                                       shared_qc_idx_lower=combined_data_good_idx)
             else:
                 if cur_qc_data is not None:
-                    cur_title = 'Evolution of ' + title_str + '. The green line depicts the QC flags.'
+                    cur_title = title_str + '. The green line depicts the QC flags.'
                 else:
-                    cur_title = 'Evolution of ' + title_str
+                    cur_title = title_str
                 plot_1d(self.doc, self.converted_time, cur_data, cur_variable.units, cur_title, cur_qc_data,
                         input_month_title=self.month_str + ' ' + str(self.year))
                 if cur_qc_data is not None:
@@ -255,7 +265,7 @@ class HFRadar:
                     good_data = cur_data
                     good_data[np.logical_not(good_idx)] = np.nan
                     plot_1d(self.doc, self.converted_time, good_data, cur_variable.units,
-                            'Evolution of ' + title_str + ' GOOD DATA ONLY',
+                            title_str + ' GOOD DATA ONLY',
                             input_month_title=self.month_str + ' ' + str(self.year))
 
     def u_v_comparison(self):
@@ -290,7 +300,7 @@ class HFRadar:
 
     def comparison_radar_buoy(self):
         self.doc.append('The following figures are showing the speed and direction observed by the SOCIB HF Radar of'
-                        ' the closest grid point with respect to the position of the SOCIB Ibiza Buoy.\n')
+                        ' the closest grid point with respect to the position of the SOCIB Ibiza Channel Buoy.\n')
         self.doc.append('On a rotating basis, an overlapping graph and the differences between these two datasets are'
                         ' shown.\n')
         self.doc.append('The compared datasets are WSPE --> CUR_SPE and WSPE_DIR --> CUR_DIR where the WSPE variables'
@@ -358,14 +368,13 @@ class HFRadar:
         lon2, lat2 = np.meshgrid(self.lon, self.lat)
         masked_array = np.ma.array(self.lat_lon_percent, mask=self.lat_lon_percent == 0.0)
 
-        temp_basemap = get_basemap('h')
         temp_basemap1 = get_basemap('h')
 
-        plot_spatial_availability(self.doc, temp_basemap, lon2, lat2, masked_array, temp_basemap1)
+        plot_spatial_availability(self.doc, lon2, lat2, masked_array, temp_basemap1)
 
     def spatial_and_temporal_availability(self):
-        self.doc.append('This figure shows the temporal and spatial availability of all gridpoints that contain at once'
-                        ' during the regarded month data.')
+        self.doc.append('This figure shows the temporal and spatial availability of all gridpoints that contain at'
+                        ' least one data entry. All-NaN gridpoints are ignored.')
         spatial_avail = np.reshape(self.lat_lon_percent, (1, len(self.lon)*len(self.lat)))[0]
         sorted_spatial_avail = np.sort(spatial_avail)
         non_zero_sorted_spatial_avail = sorted_spatial_avail[sorted_spatial_avail != 0.]
@@ -379,7 +388,7 @@ class HFRadar:
 
     def filesize_threshold(self):
         self.doc.append('Represents the percent availability of files within the regarded month that exceed the defined'
-                        ' thresholds for file sizes. Missing files are not regarded.')
+                        ' thresholds for file sizes. Missing files are not considered.')
         self.doc.append(NoEscape(r'\\\linebreak'))
         form_path = c.settings.form_path + str(self.year) + '/' + str(self.month).zfill(2) + '/'
         galf_path = c.settings.galf_path + str(self.year) + '/' + str(self.month).zfill(2) + '/'
@@ -423,6 +432,7 @@ class HFRadar:
                                  self.root.variables[name], self.year, self.month_str)
 
     def create_histogram(self):
+        logger.info('Starting Histogram Creation...')
         self.doc.append('This bar chart shows the number of available radial files per 10 days.')
         cur_end_of_month = calendar.monthrange(self.year, self.month)[1]
         file_prefix = 'RDLi_'
@@ -479,8 +489,6 @@ class HFRadar:
         qc_v = get_data_array(self.root["QC_V"])
         wspe_dir = get_data_array(self.root["WSPE_DIR"])
         wspe = get_data_array(self.root["WSPE"])
-        basemaps = [Basemap(projection='cyl', llcrnrlat=38.30, urcrnrlat=39.50, llcrnrlon=-0.35, urcrnrlon=1.80,
-                            lat_ts=35., resolution='h') for _ in range(0, 3)]
         np_longrid, np_latgrid = np.meshgrid(self.lon, self.lat)
         t_tide_harmonic_analysis(self.doc, cur_u, cur_v, self.time, self.year, self.month, self.lat, self.lon, qc_u,
-                                 qc_v, wspe_dir, wspe, basemaps, np_longrid, np_latgrid)
+                                 qc_v, wspe_dir, wspe, np_longrid, np_latgrid)
