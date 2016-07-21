@@ -85,7 +85,7 @@ class _Settings(object):
         self._form_filesize_threshold = 110.0
         self._total_filesize_threshold = 60
         self._statistics_variable_names = ['RADV', 'SSN', 'RABA_GALF', 'RABA_FORM', 'RABA_DIFF_GALF', 'RABA_DIFF_FORM']
-        self._threshold_parameters = {'RADV': [500, None], 'SSN': [20, None], 'RABA_GALF': [-130, -90],
+        self._threshold_parameters = {'RADV': [500, 3000], 'SSN': [20, None], 'RABA_GALF': [-130, -90],
                                       'RABA_DIFF_GALF': [0, 20], 'RABA_FORM': [-110, -70], 'RABA_DIFF_FORM': [0, 20]}
         self._close_to_buoy_statistics_variable_names = ['U', 'V', 'WSPE', 'WSPE_DIR', 'U_QAL', 'V_QAL', 'COVARIANCE_QAL']
 
