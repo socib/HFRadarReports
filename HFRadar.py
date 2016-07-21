@@ -93,22 +93,22 @@ class HFRadar:
             self.doc.append(NoEscape(r'\clearpage'))
 
     def do_processing(self):
-        # Comment sections for debugging.
+        # Comment sections for debugging / skip sections
+        # Important to include the first section since we find the buoy grid point there
         sections = [
                     ['Monthly Surface Current Pattern', self.monthly_mean],
                     ['Temporal Availability', self.temporal_availability],
                     ['Time Series at the grid point closest to the Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
                     ['Data Tables at the grid point closest to the Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
                     ['Comparison Graphs', self.comparison_radar_buoy],
-                    ['U and V Components Comparisons', self.u_v_comparison],
                     ['Spatial Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
-                    ['Spatial Availability', self.spatial_availability],
-                    ['Temporal and Spatial Availability', self.spatial_and_temporal_availability],
-                    ['Percent Filesize above Threshold', self.filesize_threshold],
+                    ['Spatial Distribution of the Temporal Coverage', self.spatial_availability],
+                    ['Spatial Coverage vs. Temporal Coverage', self.spatial_and_temporal_availability],
+                    ['Percent of Files Larger than a given Quality Threshold', self.filesize_threshold],
                     ['Statistics from QC Variables', self.compute_statistics],
                     ['Threshold Graphs', self.create_threshold_graphs],
-                    #['Histogram Radial Files per 10 Days.', self.create_histogram],
-                    #['Tidal Analysis', self.harmonic_analysis],
+                    ['Histogram Radial Files per 10 Days.', self.create_histogram],
+                    ['Tidal Analysis', self.harmonic_analysis],
                     ['Energy Spectra', self.create_power_spectrum]
                     ]
         for section in sections:
@@ -173,9 +173,6 @@ class HFRadar:
 
     def timeseries_at_buoy_ibiza(self):
         # TODO: clean that mess... well that happens if you stuff something like that in 10 minutes together kriete
-        # Note: they are sharing the amplifiers here currently
-        buoy_lat, buoy_lon = get_data_array(self.buoy_variables["LAT"]), get_data_array(self.buoy_variables["LON"])
-        # self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, buoy_lat, buoy_lon)
         self.doc.append(NoEscape('Closest grid point LAT: %.6f' % self.lat[self.closest_lat_idx] +
                                  r'$^{\circ}$N' + '\n'))
         self.doc.append(NoEscape('Closest grid point LON: %.6f' % self.lon[self.closest_lon_idx] +
@@ -186,9 +183,6 @@ class HFRadar:
                                                                                    ' Buoy and, if available, the'
                                                                                    ' corresponding buoy data.')
         buoy_time = get_data_array(self.buoy_root["time"])
-        same_idx = get_same_idx(self.time, buoy_time)
-        time_filled = transform_to_full_time(self.time, buoy_time)
-        filled_conv_time = get_md_datenum(time_filled)
         if len(self.time) != len(buoy_time):
             logger.info('HF time len: {0}, Buoy time len: {1}'.format(len(self.time), len(buoy_time)))
         for variable_name in variables_of_interest:
@@ -201,72 +195,16 @@ class HFRadar:
             else:
                 cur_qc_data = None
             cur_data = get_data_array(cur_variable)[:, self.closest_lat_idx, self.closest_lon_idx]
-            if variable_name == 'WSPE_DIR':
-                amplifier_variable = get_data_array(
-                    self.variables['WSPE'])[:, self.closest_lat_idx, self.closest_lon_idx]
-                buoy_dir = self.buoy_root.variables["CUR_DIR"]
-                buoy_dir_data = get_data_array(buoy_dir)
-                buoy_spe = self.buoy_root.variables["CUR_SPE"]
-                buoy_spe_data = get_data_array(buoy_spe)
-                cur_data_filled, buoy_dir_data_filled = transform_to_full_data(cur_data, buoy_dir_data, same_idx)
-                amplifier_variable_filled, buoy_spe_data_filled = transform_to_full_data(amplifier_variable,
-                                                                                         buoy_spe_data, same_idx)
-                plot_quiver_direction_overlapping(self.doc, filled_conv_time, cur_data_filled,
-                                                  'Comparison of Directions from HF Radar Closest Grid Point (bottom)'
-                                                  ' and Ibiza Channel Buoy (top)', upper_direction=buoy_dir_data_filled,
-                                                  lower_amplifier=amplifier_variable_filled,
-                                                  input_month_title=self.month_str + ' ' + str(self.year),
-                                                  upper_amplifier=buoy_spe_data_filled)
-                if cur_qc_data is not None:
-                    # laziness: no checks performed that variable exists
-                    amplifier_qc_variable_name = get_qc_variable_name(self.variables['WSPE'])
-                    amplifier_qc_data = get_data_array(
-                        self.root.variables[amplifier_qc_variable_name])[:, self.closest_lat_idx, self.closest_lon_idx]
-                    buoy_qc_variable_name = get_qc_variable_name(buoy_dir)
-                    buoy_amplifier_qc_variable_name = get_qc_variable_name(buoy_spe)
-                    buoy_qc_variable_data = get_data_array(self.buoy_root.variables[buoy_qc_variable_name])
-                    buoy_qc_amplifier_data = get_data_array(self.buoy_root.variables[buoy_amplifier_qc_variable_name])
-
-                    # insert transformed data
-                    cur_qc_data_filled, buoy_qc_variable_data_filled = transform_to_full_data(
-                        cur_qc_data, buoy_qc_variable_data, same_idx)
-                    amplifier_qc_data_filled, buoy_qc_amplifier_data_filled = transform_to_full_data(
-                        amplifier_qc_data, buoy_qc_amplifier_data, same_idx)
-
-                    # hf radar combine qc from spe and dir
-                    cur_data_good_idx = cur_qc_data_filled == 1
-                    amplifier_qc_good_idx = amplifier_qc_data_filled == 1
-                    combined_data_good_idx = np.logical_or(cur_data_good_idx, amplifier_qc_good_idx)
-
-                    # buoy combine qc from spe and dir
-                    buoy_dir_good_idx = buoy_qc_variable_data_filled == 1
-                    buoy_amplifier_good_idx = buoy_qc_amplifier_data_filled == 1
-                    buoy_combined_good_idx = np.logical_or(buoy_dir_good_idx, buoy_amplifier_good_idx)
-
-                    # combine idx from hf and buoy combined idx
-                    plot_quiver_direction_overlapping(self.doc, filled_conv_time, cur_data_filled,
-                                                      'Comparison of Directions from HF Radar Closest'
-                                                      ' Grid Point (bottom) and Ibiza Channel Buoy (top)'
-                                                      ' GOOD DATA ONLY', buoy_dir_data_filled,
-                                                      lower_amplifier=amplifier_variable_filled,
-                                                      input_month_title=self.month_str + ' ' + str(self.year),
-                                                      upper_amplifier=buoy_spe_data_filled,
-                                                      shared_qc_idx_upper=buoy_combined_good_idx,
-                                                      shared_qc_idx_lower=combined_data_good_idx)
+            if cur_qc_data is not None:
+                cur_title = title_str + '. The green line depicts the QC flags.'
             else:
-                if cur_qc_data is not None:
-                    cur_title = title_str + '. The green line depicts the QC flags.'
-                else:
-                    cur_title = title_str
-                plot_1d(self.doc, self.converted_time, cur_data, cur_variable.units, cur_title, cur_qc_data,
-                        input_month_title=self.month_str + ' ' + str(self.year))
-                if cur_qc_data is not None:
-                    good_idx = cur_qc_data == 1
-                    good_data = cur_data
-                    good_data[np.logical_not(good_idx)] = np.nan
-                    plot_1d(self.doc, self.converted_time, good_data, cur_variable.units,
-                            title_str + ' GOOD DATA ONLY',
-                            input_month_title=self.month_str + ' ' + str(self.year))
+                cur_title = title_str
+            if cur_variable.units == 'degree':
+                is_360_degree = True
+            else:
+                is_360_degree = False
+            plot_1d(self.doc, self.converted_time, cur_data, cur_variable.units, cur_title, cur_qc_data,
+                    input_month_title=self.month_str + ' ' + str(self.year), is_degree_0_360_y_limit=is_360_degree)
 
     def u_v_comparison(self):
         hf_dir = get_data_array(self.root["WSPE_DIR"])[:, self.closest_lat_idx, self.closest_lon_idx]
@@ -288,15 +226,16 @@ class HFRadar:
         time_filled = transform_to_full_time(self.time, buoy_time)
         filled_conv_time = get_md_datenum(time_filled)
 
-        compare_u_v_components(self.doc, hf_dir, hf_spe, buoy_dir, buoy_spe/100, hf_u, hf_v, filled_conv_time)
+        compare_u_v_components(self.doc, hf_dir, hf_spe, buoy_dir, buoy_spe/100, hf_u, hf_v, filled_conv_time,
+                               same_y_limits=True)
         u_diff = hf_u - buoy_u
         v_diff = hf_v - buoy_v
         plot_1d(self.doc, filled_conv_time, u_diff, 'm/s',
                 'Difference Chart Buoy ({0}) and HF ({1})'.format('U_derived', 'U'),
-                input_month_title=self.month_str + ' ' + str(self.year))
+                input_month_title=self.month_str + ' ' + str(self.year), same_y_limits=True)
         plot_1d(self.doc, filled_conv_time, v_diff, 'm/s',
-                'Difference Chart Buoy ({0}) and HF ({1})'.format('U_derived', 'U'),
-                input_month_title=self.month_str + ' ' + str(self.year))
+                'Difference Chart Buoy ({0}) and HF ({1})'.format('V_derived', 'V'),
+                input_month_title=self.month_str + ' ' + str(self.year), same_y_limits=True)
 
     def comparison_radar_buoy(self):
         self.doc.append('The following figures are showing the speed and direction observed by the SOCIB HF Radar of'
@@ -304,7 +243,9 @@ class HFRadar:
         self.doc.append('On a rotating basis, an overlapping graph and the differences between these two datasets are'
                         ' shown.\n')
         self.doc.append('The compared datasets are WSPE --> CUR_SPE and WSPE_DIR --> CUR_DIR where the WSPE variables'
-                        ' are measured by the HF radar and CUR variables the respective buoy variables.')
+                        ' are measured by the HF radar and CUR variables the respective buoy variables.\n')
+        self.doc.append(NoEscape(r'The distributions of the direction and speed are shown as wind'
+                                 r' roses. Distributions below 10 $cm \, s^{-1}$ are discarded.'))
         compare_variables_names = [["WSPE", "CUR_SPE"],
                                    ["WSPE_DIR", "CUR_DIR"]]
         for comparison_var_names in compare_variables_names:
@@ -328,22 +269,107 @@ class HFRadar:
             time_filled = transform_to_full_time(self.time, buoy_time)
             data_filled, buoy_data_filled = transform_to_full_data(hf_data, buoy_data, same_idx)
             filled_conv_time = get_md_datenum(time_filled)
+            if hf_units == 'degree' and buoy_units == 'degree':
+                is_0_360_limit = True
+            else:
+                is_0_360_limit = False
             plot_overlapping_1d_graphs(self.doc, filled_conv_time, data_filled, buoy_data_filled, self.year,
                                        self.month_str,
                                        title_str='Overlapping Graph Buoy {0} and HF {1}'.format(buoy_title_name,
                                                                                                 hf_title_name),
-                                       y_label=hf_units)
+                                       y_label=hf_units, is_degree_0_360_y_limit=is_0_360_limit)
             if hf_units == 'degree' and buoy_units == 'degree':
                 logger.debug('Angles detected. Will plot now differences between these within 180 and -180 degrees.')
                 diff = compare_angles(buoy_data_filled, data_filled)
                 plot_1d(self.doc, filled_conv_time, diff, hf_units,
                         'Difference Chart Buoy {0} and HF {1}'.format(buoy_title_name, hf_title_name),
-                        input_month_title=self.month_str + ' ' + str(self.year))
+                        input_month_title=self.month_str + ' ' + str(self.year), is_degree_180_180_y_limit=True)
             else:
                 diff = get_differences(data_filled, buoy_data_filled)
                 plot_1d(self.doc, filled_conv_time, diff, hf_units,
                         'Difference Chart Buoy {0} and HF {1}'.format(buoy_title_name, hf_title_name),
-                        input_month_title=self.month_str + ' ' + str(self.year))
+                        input_month_title=self.month_str + ' ' + str(self.year), same_y_limits=True)
+        # stick plots bypass
+        cur_variable = self.root.variables['WSPE_DIR']
+        cur_qc_variable_name = get_qc_variable_name(cur_variable)
+        title_str = get_title_name(cur_variable)
+        cur_data = get_data_array(cur_variable)[:, self.closest_lat_idx, self.closest_lon_idx]
+        amplifier_variable = get_data_array(self.variables['WSPE'])[:, self.closest_lat_idx, self.closest_lon_idx]
+
+        buoy_time = get_data_array(self.buoy_root["time"])
+        same_idx = get_same_idx(self.time, buoy_time)
+        time_filled = transform_to_full_time(self.time, buoy_time)
+        filled_conv_time = get_md_datenum(time_filled)
+
+        buoy_dir = self.buoy_root.variables["CUR_DIR"]
+        buoy_dir_data = get_data_array(buoy_dir)
+        buoy_spe = self.buoy_root.variables["CUR_SPE"]
+        buoy_spe_data = get_data_array(buoy_spe)
+        cur_data_filled, buoy_dir_data_filled = transform_to_full_data(cur_data, buoy_dir_data, same_idx)
+        amplifier_variable_filled, buoy_spe_data_filled = transform_to_full_data(amplifier_variable, buoy_spe_data,
+                                                                                 same_idx)
+        # laziness here: no checks performed that variable exists
+        amplifier_qc_variable_name = get_qc_variable_name(self.variables['WSPE'])
+        amplifier_qc_data = get_data_array(
+            self.root.variables[amplifier_qc_variable_name])[:, self.closest_lat_idx, self.closest_lon_idx]
+        buoy_qc_variable_name = get_qc_variable_name(buoy_dir)
+        buoy_amplifier_qc_variable_name = get_qc_variable_name(buoy_spe)
+        buoy_qc_variable_data = get_data_array(self.buoy_root.variables[buoy_qc_variable_name])
+        buoy_qc_amplifier_data = get_data_array(self.buoy_root.variables[buoy_amplifier_qc_variable_name])
+
+        cur_qc_variable = self.root.variables[cur_qc_variable_name]
+        cur_qc_data = get_data_array(cur_qc_variable)[:, self.closest_lat_idx, self.closest_lon_idx]
+
+        # insert transformed data
+        cur_qc_data_filled, buoy_qc_variable_data_filled = transform_to_full_data(cur_qc_data, buoy_qc_variable_data,
+                                                                                  same_idx)
+        amplifier_qc_data_filled, buoy_qc_amplifier_data_filled = transform_to_full_data(amplifier_qc_data,
+                                                                                         buoy_qc_amplifier_data,
+                                                                                         same_idx)
+        # hf radar combine qc from spe and dir
+        cur_data_good_idx = cur_qc_data_filled == 1
+        amplifier_qc_good_idx = amplifier_qc_data_filled == 1
+        combined_data_good_idx = np.logical_or(cur_data_good_idx, amplifier_qc_good_idx)
+
+        # buoy combine qc from spe and dir
+        buoy_dir_good_idx = buoy_qc_variable_data_filled == 1
+        buoy_amplifier_good_idx = buoy_qc_amplifier_data_filled == 1
+        buoy_combined_good_idx = np.logical_or(buoy_dir_good_idx, buoy_amplifier_good_idx)
+
+        # combine idx from hf and buoy combined idx
+        plot_quiver_direction_overlapping(self.doc, filled_conv_time, cur_data_filled,
+                                          'Comparison of Directions from HF Radar Closest'
+                                          ' Grid Point (bottom) and Ibiza Channel Buoy (top)'
+                                          ' GOOD DATA ONLY', buoy_dir_data_filled,
+                                          lower_amplifier=amplifier_variable_filled,
+                                          input_month_title=self.month_str + ' ' + str(self.year),
+                                          upper_amplifier=buoy_spe_data_filled,
+                                          shared_qc_idx_upper=buoy_combined_good_idx,
+                                          shared_qc_idx_lower=combined_data_good_idx)
+        self.u_v_comparison()
+        # Wind rose
+
+        hf_speed = get_data_array(self.root['WSPE'])[:, self.closest_lat_idx, self.closest_lon_idx]
+        hf_dir = get_data_array(self.root['WSPE_DIR'])[:, self.closest_lat_idx, self.closest_lon_idx]
+
+        buoy_speed = get_data_array(self.buoy_root['CUR_SPE'])
+        buoy_dir = get_data_array(self.buoy_root['CUR_DIR'])
+
+        hf_speed, buoy_speed = transform_to_full_data(hf_speed, buoy_speed, same_idx)
+        hf_dir, buoy_dir = transform_to_full_data(hf_dir, buoy_dir, same_idx)
+
+        non_nan_idx_hf = np.logical_and(~np.isnan(hf_speed), ~np.isnan(hf_dir))
+        non_nan_idx_buoy = np.logical_and(~np.isnan(buoy_speed), ~np.isnan(buoy_dir))
+        non_nan_idx = np.logical_and(non_nan_idx_hf, non_nan_idx_buoy)
+
+        hf_distribution = plot_wind_rose(self.doc, hf_speed[non_nan_idx]*100., hf_dir[non_nan_idx],
+                                         'Radar data at Buoy Position', self.month_str, self.year)
+        buoy_distribution = plot_wind_rose(self.doc, buoy_speed[non_nan_idx], buoy_dir[non_nan_idx],
+                                           'Ibiza Channel Buoy', self.month_str, self.year)
+        plot_wind_bars_distribution(self.doc, hf_distribution, 'Radar wave direction distribution at Buoy Position',
+                                    self.month_str, self.year)
+        plot_wind_bars_distribution(self.doc, buoy_distribution, 'Buoy wave direction distribution', self.month_str,
+                                    self.year)
 
     def temporal_availability(self):
         self.doc.append('This graph shows the temporal availability of both radial sites managed by SOCIB. A continues'
@@ -375,6 +401,8 @@ class HFRadar:
     def spatial_and_temporal_availability(self):
         self.doc.append('This figure shows the temporal and spatial availability of all gridpoints that contain at'
                         ' least one data entry. All-NaN gridpoints are ignored.')
+        self.doc.append('The goal of the system is to provide surface currents t over 80% of the spatial region of the'
+                        ' Ibiza Channel over 80% of the time.')
         spatial_avail = np.reshape(self.lat_lon_percent, (1, len(self.lon)*len(self.lat)))[0]
         sorted_spatial_avail = np.sort(spatial_avail)
         non_zero_sorted_spatial_avail = sorted_spatial_avail[sorted_spatial_avail != 0.]
@@ -477,10 +505,14 @@ class HFRadar:
         logger.info('Monthly temporal and spatial wspe mean: ' + str(wspe_temporal_spatial_mean) + ' m/s')
         logger.info('Monthly temporal and spatial wspe var: ' + str(np.nanvar(wspe_temporal_mean)) + ' m/s')
         spatially_averaged_wspe = average_spatially(get_data_array(self.root["WSPE"]))
+        self.doc.append(NoEscape(r'To apply the filter, the spatially averaged surface currents are interpolated using'
+                                 r' linear interpolation. In the following plots, the black lines show the'
+                                 r' low-pass filtered data with inserted gaps at NaN indices. Blue lines indicate the'
+                                 r' non-interpolated current speed.\\\linebreak'))
         filter_components(self.doc, spatially_averaged_wspe, self.time, self.root["WSPE"].units)
-        plot_1d(self.doc, self.converted_time, spatially_averaged_wspe, self.root["WSPE"].units,
-                'Spatially Averaged ' + get_standard_name(self.root["WSPE"]),
-                input_month_title=self.month_str + ' ' + str(self.year))
+        # plot_1d(self.doc, self.converted_time, spatially_averaged_wspe, self.root["WSPE"].units,
+        #         'Spatially Averaged ' + get_standard_name(self.root["WSPE"]),
+        #         input_month_title=self.month_str + ' ' + str(self.year))
 
     def harmonic_analysis(self):
         cur_u = get_data_array(self.root["U"])
