@@ -23,12 +23,16 @@ class HFReportGenerator:
                 itemize.add_item('Monthly means of the direction vectors, statistics (time series and data tables) as'
                                  ' well as comparison graphs at the closest grid point compared to the Ibiza Channel'
                                  ' Buoy managed by SOCIB.')
-                itemize.add_item('Besides the temporal and spatial availability of the data available, figures with'
-                                 ' accepted thresholds are shown as well as a histogram representing the amount of'
-                                 ' radial files per 10 days which are available.')
-                itemize.add_item('All quiver (also knowns as feather or stick) graphs are represented in Oceanographic'
-                                 ' Convention (Angle N 0 degree represents the current originating in South and flowing'
-                                 ' to North.')
+                itemize.add_item(NoEscape(r'This report aims to extract useful and meaningful information from HF radar'
+                                          r' data using qualitative and quantitative data analysis methods. Furthermore,'
+                                          r' comparison of the horizontal current components derived from HF radar and'
+                                          r' the pointwise subsurface currents from the current-meter (1.5 m) deployed'
+                                          r' in the Ibiza Channel (at location 38$^{\circ}$49.46$^\prime$N and'
+                                          r' 0$^{\circ}$47.02$^\prime$W) allow to evaluate the radar performance and'
+                                          r' identify temporal periods of malfunctioning of the radar (or the'
+                                          r' current-meter).'))
+                itemize.add_item('Please, note that figures are using the oceanographic convention (currents pointing'
+                                 ' in the direction the flow is toward)')
 
     def write_title_page(self):
         self.doc.append(NoEscape(r'\thispagestyle{empty}\begin{titlepage}\centering'))
@@ -104,6 +108,7 @@ class HFReportGenerator:
         self.doc.append(NoEscape(r'\pagebreak'))
         self.write_introduction()
         self.doc.append(NoEscape(r'\pagebreak'))
+        self.doc.append('Automatic data processing includes:')
         self.doc.append(NoEscape(r'\tableofcontents'))
         self.doc.append(NoEscape(r'\pagebreak'))
 
