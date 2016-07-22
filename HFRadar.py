@@ -497,7 +497,7 @@ class HFRadar:
     def create_power_spectrum(self):
         closest_u = get_data_array(self.variables["U"])[:, self.closest_lat_idx, self.closest_lon_idx]
         closest_v = get_data_array(self.variables["V"])[:, self.closest_lat_idx, self.closest_lon_idx]
-        plot_energy_spectrum(self.doc, self.time, closest_u, closest_v)
+        plot_energy_spectrum(self.doc, self.time, closest_u, closest_v, self.month_str, self.year)
 
     def spatially_averaged_surface_current_variance(self):
         wspe_temporal_mean = get_temporal_mean_from_grid(get_data_array(self.root["WSPE"]))
