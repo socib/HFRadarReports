@@ -98,17 +98,17 @@ class HFRadar:
         sections = [
                     ['Monthly Surface Current Pattern', self.monthly_mean],
                     ['Temporal Availability', self.temporal_availability],
-                    ['Time Series at the grid point closest to the Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
-                    ['Data Tables at the grid point closest to the Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
-                    ['Comparison Graphs', self.comparison_radar_buoy],
+                    ['Time Series of HFR at the nearest point of Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
+                    ['Data Tables of HFR data statistics at the nearest point of Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
+                    ['Comparison between HF Radar and Current Measurements', self.comparison_radar_buoy],
                     ['Spatial Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
                     ['Spatial Distribution of the Temporal Coverage', self.spatial_availability],
                     ['Spatial Coverage vs. Temporal Coverage', self.spatial_and_temporal_availability],
                     ['Percent of Files Larger than a given Quality Threshold', self.filesize_threshold],
                     ['Statistics from QC Variables', self.compute_statistics],
                     ['Threshold Graphs', self.create_threshold_graphs],
-                    ['Histogram Radial Files per 10 Days.', self.create_histogram],
-                    ['Tidal Analysis', self.harmonic_analysis],
+                    # ['Histogram Radial Files per 10 Days.', self.create_histogram],
+                    # ['Tidal Analysis', self.harmonic_analysis],
                     ['Energy Spectra', self.create_power_spectrum]
                    ]
         for section in sections:
@@ -275,8 +275,8 @@ class HFRadar:
                 is_0_360_limit = False
             plot_overlapping_1d_graphs(self.doc, filled_conv_time, data_filled, buoy_data_filled, self.year,
                                        self.month_str,
-                                       title_str='Overlapping Graph Buoy {0} and HF {1}'.format(buoy_title_name,
-                                                                                                hf_title_name),
+                                       title_str='Overlapping Graph Buoy ({0}, blue line) and'
+                                                 ' HF ({1}, black line)'.format(buoy_title_name, hf_title_name),
                                        y_label=hf_units, is_degree_0_360_y_limit=is_0_360_limit)
             if hf_units == 'degree' and buoy_units == 'degree':
                 logger.debug('Angles detected. Will plot now differences between these within 180 and -180 degrees.')
@@ -362,14 +362,23 @@ class HFRadar:
         non_nan_idx_buoy = np.logical_and(~np.isnan(buoy_speed), ~np.isnan(buoy_dir))
         non_nan_idx = np.logical_and(non_nan_idx_hf, non_nan_idx_buoy)
 
+        hf_dir1, hf_spe1 = clean_direction_and_speed(hf_dir[non_nan_idx], hf_speed[non_nan_idx]*100.)
+        bu_dir1, bu_spe1 = clean_direction_and_speed(buoy_dir[non_nan_idx], buoy_speed[non_nan_idx])
+        hf_wd_freq = wind_rose_hist(hf_dir1, hf_spe1, 32, normed=True)
+        bu_wd_freq = wind_rose_hist(bu_dir1, bu_spe1, 32, normed=True)
+
+        cur_min = np.min([hf_wd_freq, bu_wd_freq])
+        cur_max = np.max([hf_wd_freq, bu_wd_freq])
+        cur_y_lim = [cur_min, cur_max]
+
         hf_distribution = plot_wind_rose(self.doc, hf_speed[non_nan_idx]*100., hf_dir[non_nan_idx],
-                                         'Radar data at Buoy Position', self.month_str, self.year)
+                                         'Radar data at Buoy Position', self.month_str, self.year, cur_y_lim=cur_y_lim)
         buoy_distribution = plot_wind_rose(self.doc, buoy_speed[non_nan_idx], buoy_dir[non_nan_idx],
-                                           'Ibiza Channel Buoy', self.month_str, self.year)
-        plot_wind_bars_distribution(self.doc, hf_distribution, 'Radar wave direction distribution at Buoy Position',
-                                    self.month_str, self.year)
-        plot_wind_bars_distribution(self.doc, buoy_distribution, 'Buoy wave direction distribution', self.month_str,
-                                    self.year)
+                                           'Ibiza Channel Buoy', self.month_str, self.year, cur_y_lim=cur_y_lim)
+        plot_wind_bars_distribution(self.doc, hf_distribution, 'HF Radar direction distribution at Buoy Position',
+                                    self.month_str, self.year, cur_y_lim=cur_y_lim)
+        plot_wind_bars_distribution(self.doc, buoy_distribution, 'Buoy direction distribution', self.month_str,
+                                    self.year, cur_y_lim=cur_y_lim)
 
     def temporal_availability(self):
         self.doc.append('This graph shows the temporal availability of both radial sites managed by SOCIB. A continues'
@@ -401,8 +410,9 @@ class HFRadar:
     def spatial_and_temporal_availability(self):
         self.doc.append('This figure shows the temporal and spatial availability of all gridpoints that contain at'
                         ' least one data entry. All-NaN gridpoints are ignored.')
-        self.doc.append('The goal of the system is to provide surface currents t over 80% of the spatial region of the'
-                        ' Ibiza Channel over 80% of the time.')
+        self.doc.append('The goal of the system is to provide surface currents over 80% of the spatial region of the'
+                        ' Ibiza Channel over 80% of the time (MARACOOS 80/80 metric goal) as recommended by the U.S.'
+                        ' Coast Guard.')
         spatial_avail = np.reshape(self.lat_lon_percent, (1, len(self.lon)*len(self.lat)))[0]
         sorted_spatial_avail = np.sort(spatial_avail)
         non_zero_sorted_spatial_avail = sorted_spatial_avail[sorted_spatial_avail != 0.]
