@@ -90,7 +90,11 @@ class HFRadar:
     def write_section(self, title, func):
         with self.doc.create(Section(title)):
             func()
-            self.doc.append(NoEscape(r'\clearpage'))
+            # very dirty workaround
+            # well, actually it's not thaaat dirty
+            compress_sections = ['Spatial Coverage vs. Temporal Coverage']
+            if title not in compress_sections:
+                self.doc.append(NoEscape(r'\clearpage'))
 
     def do_processing(self):
         # Comment sections for debugging / skip sections
@@ -101,14 +105,14 @@ class HFRadar:
                     ['Time Series of HFR at the nearest point of Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
                     ['Data Tables of HFR data statistics at the nearest point of Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
                     ['Comparison between HF Radar and Current Measurements', self.comparison_radar_buoy],
-                    ['Spatial Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
+                    ['Spatially Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
                     ['Spatial Distribution of the Temporal Coverage', self.spatial_availability],
                     ['Spatial Coverage vs. Temporal Coverage', self.spatial_and_temporal_availability],
                     ['Percent of Files Larger than a given Quality Threshold', self.filesize_threshold],
                     ['Statistics from QC Variables', self.compute_statistics],
                     ['Threshold Graphs', self.create_threshold_graphs],
-                    # ['Histogram Radial Files per 10 Days.', self.create_histogram],
-                    # ['Tidal Analysis', self.harmonic_analysis],
+                    ['Histogram Radial Files per 10 Days', self.create_histogram],
+                    ['Tidal Analysis', self.harmonic_analysis],
                     ['Energy Spectra', self.create_power_spectrum]
                    ]
         for section in sections:
@@ -116,7 +120,7 @@ class HFRadar:
 
     def monthly_mean(self):
         logger.info('Generating Monthly Mean Direction Plot')
-        self.doc.append('This plot represents the averaged monthly mean directions of the U and V components.')
+        self.doc.append('This plot represents the monthly averaged directions of the U and V components.')
         u_mean = get_temporal_mean_from_grid(get_data_array(self.variables["U"]))
         v_mean = get_temporal_mean_from_grid(get_data_array(self.variables["V"]))
         np_longrid, np_langrid = np.meshgrid(self.lon, self.lat)
@@ -126,6 +130,9 @@ class HFRadar:
 
         hf_monthly_mean_direction_plot(self.doc, u_mean, v_mean, np_longrid, np_langrid, self.high_res_basemap,
                                        buoy_lat, buoy_lon)
+        # For debugging purposes
+        # hf_plot_grid_and_buoy_position(np_langrid, np_longrid, buoy_lat, buoy_lon,
+        #                                self.lat[self.closest_lat_idx], self.lon[self.closest_lon_idx])
 
     def tables_at_buoy_ibiza(self):
         variables_of_interest = c.settings.close_to_buoy_statistics_variable_names
@@ -176,7 +183,13 @@ class HFRadar:
         self.doc.append(NoEscape('Closest grid point LAT: %.6f' % self.lat[self.closest_lat_idx] +
                                  r'$^{\circ}$N' + '\n'))
         self.doc.append(NoEscape('Closest grid point LON: %.6f' % self.lon[self.closest_lon_idx] +
-                                 r'$^{\circ}$E' + '\n\n'))
+                                 r'$^{\circ}$E' + '\n'))
+        buoy_lat = get_data_array(self.buoy_root["LAT"])
+        buoy_lon = get_data_array(self.buoy_root["LON"])
+        cur_dist = calc_distance(buoy_lat, buoy_lon, self.lat[self.closest_lat_idx], self.lon[self.closest_lon_idx])
+        self.doc.append(NoEscape('Distance between the closest grid point and the Ibiza Channel Buoy: %.3f' % cur_dist +
+                                 'km.\n\n'))
+
         variables_of_interest = ['U', 'V', 'WSPE', 'WSPE_DIR', 'U_QAL', 'V_QAL', 'COVARIANCE_QAL']
         self.doc.append('Represents the variables ' + str(variables_of_interest) + ' at the closest grid point'
                                                                                    ' respective to the Ibiza Channel'
@@ -196,7 +209,7 @@ class HFRadar:
                 cur_qc_data = None
             cur_data = get_data_array(cur_variable)[:, self.closest_lat_idx, self.closest_lon_idx]
             if cur_qc_data is not None:
-                cur_title = title_str + '. The green line depicts the QC flags.'
+                cur_title = title_str + '. The green line depicts the QC flags'
             else:
                 cur_title = title_str
             if cur_variable.units == 'degree':
@@ -238,12 +251,13 @@ class HFRadar:
                 input_month_title=self.month_str + ' ' + str(self.year), same_y_limits=True)
 
     def comparison_radar_buoy(self):
+        # TODO: clean dat mess... really wtf -.-
         self.doc.append('The following figures are showing the speed and direction observed by the SOCIB HF Radar of'
                         ' the closest grid point with respect to the position of the SOCIB Ibiza Channel Buoy.\n')
         self.doc.append('On a rotating basis, an overlapping graph and the differences between these two datasets are'
                         ' shown.\n')
-        self.doc.append('The compared datasets are WSPE --> CUR_SPE and WSPE_DIR --> CUR_DIR where the WSPE variables'
-                        ' are measured by the HF radar and CUR variables the respective buoy variables.\n')
+        self.doc.append('The compared datasets are WSPE vs CUR_SPE and WSPE_DIR vs CUR_DIR where the WSPE variables'
+                        ' are measured by the HF radar and CUR variables the respective Ibiza Channel Buoy variables.\n')
         self.doc.append(NoEscape(r'The distributions of the direction and speed are shown as wind'
                                  r' roses. Distributions below 10 $cm \, s^{-1}$ are discarded.'))
         compare_variables_names = [["WSPE", "CUR_SPE"],
@@ -381,16 +395,16 @@ class HFRadar:
                                     self.year, cur_y_lim=cur_y_lim)
 
     def temporal_availability(self):
-        self.doc.append('This graph shows the temporal availability of both radial sites managed by SOCIB. A continues'
-                        ' line indicates full data availability whilst an interrupted line indicates missing files for'
-                        ' these dates.')
+        self.doc.append('This graph shows the temporal availability of both radial sites managed by SOCIB. A'
+                        ' continuoues line indicates full data availability whilst an interrupted line indicates'
+                        ' missing files for these dates.')
         form_path = c.settings.form_path + str(self.year) + '/' + str(self.month).zfill(2) + '/'
         galf_path = c.settings.galf_path + str(self.year) + '/' + str(self.month).zfill(2) + '/'
         self.ibiz_avail = plot_hf_temporal_availability(self.doc, form_path, galf_path, self.time, self.year,
                                                         self.month)
 
     def spatial_availability(self):
-        self.doc.append('These maps show the total coverage of available data at each gridpoint.')
+        self.doc.append('This map shows the total coverage of available data at each gridpoint.')
         time_ibiz_avail = self.time[np.logical_not(self.ibiz_avail)]
         wspe_ibiz_avail = get_data_array(self.variables["WSPE"])[np.logical_not(self.ibiz_avail), :, :]
         lat_lon_counts = np.meshgrid(np.zeros((1, len(self.lon))), np.zeros((1, len(self.lat))))[0]
@@ -408,8 +422,8 @@ class HFRadar:
         plot_spatial_availability(self.doc, lon2, lat2, masked_array, temp_basemap1)
 
     def spatial_and_temporal_availability(self):
-        self.doc.append('This figure shows the temporal and spatial availability of all gridpoints that contain at'
-                        ' least one data entry. All-NaN gridpoints are ignored.')
+        self.doc.append('This figure shows the temporal and spatial availability of all grid points that contain at'
+                        ' least one data entry. All-NaN grid points are ignored.')
         self.doc.append('The goal of the system is to provide surface currents over 80% of the spatial region of the'
                         ' Ibiza Channel over 80% of the time (MARACOOS 80/80 metric goal) as recommended by the U.S.'
                         ' Coast Guard.')

@@ -1,6 +1,7 @@
 from HFRadar import HFRadar
 from pylatex import Document, Package, NoEscape, Section, Itemize
 from pylatex.base_classes import Options
+import calendar
 import sys
 
 
@@ -8,31 +9,30 @@ class HFReportGenerator:
     def __init__(self, year, month):
         self.year = int(year)
         self.month = int(month)
+        self.month_str = calendar.month_name[self.month]
         self.doc = None
         self.set_up_document()
         HFRadar(self.year, self.month, self.doc)
-        #self.doc.generate_tex()
+        # self.doc.generate_tex()
         self.doc.generate_pdf(extra_compiler_args='--xelatex')
 
     def write_introduction(self):
         with self.doc.create(Section('Introduction', numbering=False)):
-            self.doc.append('The HF Radar monthly reports are generated automatically and are based on the'
-                            ' information available in the thredds server for the HF Radar managed by SOCIB.')
-            self.doc.append('The report presents:')
+            self.doc.append('This monthly report aims to extract useful and meaningful information from the HF radar'
+                            ' data using qualitative and quantitative data analysis methods. The document is'
+                            ' automatically generated based on the information available in the THREDDS Data Server'
+                            ' (TDS) Catalog for the HF Radar managed by SOCIB.')
+            self.doc.append('Automatic data processing includes:')
             with self.doc.create(Itemize()) as itemize:
-                itemize.add_item('Monthly means of the direction vectors, statistics (time series and data tables) as'
-                                 ' well as comparison graphs at the closest grid point compared to the Ibiza Channel'
-                                 ' Buoy managed by SOCIB.')
-                itemize.add_item(NoEscape(r'This report aims to extract useful and meaningful information from HF radar'
-                                          r' data using qualitative and quantitative data analysis methods. Furthermore,'
-                                          r' comparison of the horizontal current components derived from HF radar and'
+                itemize.add_item('Monthly means of the direction vectors, statistics (time series and data tables)')
+                itemize.add_item(NoEscape(r'Comparisons of the horizontal current components derived from HF radar and'
                                           r' the pointwise subsurface currents from the current-meter (1.5 m) deployed'
                                           r' in the Ibiza Channel (at location 38$^{\circ}$49.46$^\prime$N and'
-                                          r' 0$^{\circ}$47.02$^\prime$W) allow to evaluate the radar performance and'
-                                          r' identify temporal periods of malfunctioning of the radar (or the'
-                                          r' current-meter).'))
-                itemize.add_item('Please, note that figures are using the oceanographic convention (currents pointing'
-                                 ' in the direction the flow is toward)')
+                                          r' 0$^{\circ}$47.02$^\prime$W), which allow us to evaluate the radar'
+                                          r' performance and identify temporal periods or malfunctioning of the radar'
+                                          r' (or the current-meter).'))
+                itemize.add_item('Note that figures are using the oceanographic convention (currents pointing in the'
+                                 ' direction the flow is toward). ')
 
     def write_title_page(self):
         self.doc.append(NoEscape(r'\thispagestyle{empty}\begin{titlepage}\centering'))
@@ -51,7 +51,9 @@ class HFReportGenerator:
         self.doc.append(NoEscape(r''))
         self.doc.append(NoEscape(r'\vspace{1cm}'))
         self.doc.append(NoEscape(r''))
-        self.doc.append(NoEscape(r'{\large \thedate}'))
+        self.doc.append(NoEscape(r'{\LARGE ' + self.month_str + ' ' + str(self.year) + r' Monthly Report}'))
+        self.doc.append(NoEscape(r''))
+        self.doc.append(NoEscape(r'{\normalsize Document generated on \thedate}'))
         self.doc.append(NoEscape(r'\end{titlepage}'))
         self.doc.append(NoEscape(r'\pagestyle{fancy}'))
 
@@ -108,7 +110,6 @@ class HFReportGenerator:
         self.doc.append(NoEscape(r'\pagebreak'))
         self.write_introduction()
         self.doc.append(NoEscape(r'\pagebreak'))
-        self.doc.append('Automatic data processing includes:')
         self.doc.append(NoEscape(r'\tableofcontents'))
         self.doc.append(NoEscape(r'\pagebreak'))
 
