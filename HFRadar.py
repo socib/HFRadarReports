@@ -51,12 +51,25 @@ class HFRadar:
             self.root = Dataset(self.link)
         except RuntimeError:
             logger.error('File does not exist. ' + self.link, exc_info=True)
-        buoy_link = get_thredds_opendap_link('mooring/currentmeter', 'buoy_canaldeibiza-scb_dcs002', 1, 'dep0001',
-                                             'buoy-canaldeibiza_scb-dcs002', self.year, self.month)
-        try:
-            self.buoy_root = Dataset(buoy_link)
-        except RuntimeError:
-            logger.error('File does not exist. ' + buoy_link, exc_info=True)
+        buoy_definitions = c.settings.buoy_paths
+        buoy_links = []
+        for i in range(0, len(buoy_definitions['folder'])):
+            cur_folder = buoy_definitions['folder'][i]
+            cur_sub_folder = buoy_definitions['sub_folder'][i]
+            cur_station_name = buoy_definitions['station_name'][i]
+            for j in range(1, 9):
+                buoy_links.append(get_thredds_opendap_link(cur_folder, cur_sub_folder, 1, 'dep000' + str(j),
+                                                           cur_station_name, self.year, self.month))
+        for cur_buoy_link in buoy_links:
+            try:
+                # Will stop trying after the first dataset is found. No merging of different datasets performed.
+                self.buoy_root = Dataset(cur_buoy_link)
+                break
+            except RuntimeError:
+                logger.warning('File does not exist. ' + cur_buoy_link, exc_info=False)
+        if self.buoy_root is None:
+            logger.error('No buoy root loaded.')
+            raise RuntimeError('Check the buoy input. Dataset with month/year file may not exist.')
 
     def read_variable(self, var_name):
         try:
@@ -381,8 +394,8 @@ class HFRadar:
         hf_wd_freq = wind_rose_hist(hf_dir1, hf_spe1, 32, normed=True)
         bu_wd_freq = wind_rose_hist(bu_dir1, bu_spe1, 32, normed=True)
 
-        cur_min = np.min([hf_wd_freq, bu_wd_freq])
-        cur_max = np.max([hf_wd_freq, bu_wd_freq])
+        cur_min = np.nanmin([hf_wd_freq, bu_wd_freq])
+        cur_max = np.nanmax([hf_wd_freq, bu_wd_freq])
         cur_y_lim = [cur_min, cur_max]
 
         hf_distribution = plot_wind_rose(self.doc, hf_speed[non_nan_idx]*100., hf_dir[non_nan_idx],

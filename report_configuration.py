@@ -54,6 +54,10 @@ class _Settings(object):
     def close_to_buoy_statistics_variable_names(self):
         return self._close_to_buoy_statistics_variable_names
 
+    @property
+    def buoy_paths(self):
+        return self._buoy_paths
+
     def __init__(self):
         self._XFMT = md.DateFormatter('%Y-%m-%d')
         self._VARIABLES_OF_INTEREST = [
@@ -88,5 +92,10 @@ class _Settings(object):
         self._threshold_parameters = {'RADV': [500, 3000], 'SSN': [20, None], 'RABA_GALF': [-130, -90],
                                       'RABA_DIFF_GALF': [0, 20], 'RABA_FORM': [-110, -70], 'RABA_DIFF_FORM': [0, 20]}
         self._close_to_buoy_statistics_variable_names = ['U', 'V', 'WSPE', 'WSPE_DIR', 'U_QAL', 'V_QAL', 'COVARIANCE_QAL']
+        self._buoy_paths = {
+            'folder': ['mooring/currentmeter', 'mooring/currentmeter'],
+            'sub_folder': ['buoy_canaldeibiza-scb_dcs002', 'buoy_canaldeibiza-scb_fsi002'],
+            'station_name': ['buoy-canaldeibiza_scb-dcs002', 'buoy-canaldeibiza_scb-fsi002']
+        }
 
 settings = _Settings()
