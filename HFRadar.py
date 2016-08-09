@@ -36,10 +36,10 @@ class HFRadar:
         self.time = []
         self.ibiz_avail = []
         self.lat_lon_percent = []
-        self.high_res_basemap = get_basemap('h')
         self.variables = {}
         self.buoy_variables = {}
         self.get_root()
+        self.high_res_basemap = get_basemap('h')
         self.get_variables()
         self.convert_time()
         self.do_processing()
@@ -50,7 +50,7 @@ class HFRadar:
         try:
             self.root = Dataset(self.link)
         except RuntimeError:
-            logger.error('File does not exist. ' + self.link, exc_info=True)
+            logger.error('File does not exist. ' + self.link, exc_info=False)
         buoy_definitions = c.settings.buoy_paths
         buoy_links = []
         for i in range(0, len(buoy_definitions['folder'])):
@@ -66,9 +66,9 @@ class HFRadar:
                 self.buoy_root = Dataset(cur_buoy_link)
                 break
             except RuntimeError:
-                logger.warning('File does not exist. ' + cur_buoy_link, exc_info=False)
+                logger.info('File does not exist. ' + cur_buoy_link, exc_info=False)
         if self.buoy_root is None:
-            logger.error('No buoy root loaded.')
+            logger.error('No buoy root loaded for {0} {1}. Will skip this month.'.format(self.year, self.month))
             raise RuntimeError('Check the buoy input. Dataset with month/year file may not exist.')
 
     def read_variable(self, var_name):
