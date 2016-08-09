@@ -58,6 +58,14 @@ class _Settings(object):
     def buoy_paths(self):
         return self._buoy_paths
 
+    @property
+    def document_output_directory(self):
+        return self._document_output_directory
+
+    @property
+    def socib_logo_path(self):
+        return self._socib_logo_path
+
     def __init__(self):
         self._XFMT = md.DateFormatter('%Y-%m-%d')
         self._VARIABLES_OF_INTEREST = [
@@ -97,5 +105,7 @@ class _Settings(object):
             'sub_folder': ['buoy_canaldeibiza-scb_dcs002', 'buoy_canaldeibiza-scb_fsi002'],
             'station_name': ['buoy-canaldeibiza_scb-dcs002', 'buoy-canaldeibiza_scb-fsi002']
         }
+        self._document_output_directory = '/home/akrietemeyer/workspace/HFRadarReport/Reports/'
+        self._socib_logo_path = '/home/akrietemeyer/workspace/HFRadarReport/logo_socib.eps'
 
 settings = _Settings()

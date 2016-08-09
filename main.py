@@ -1,3 +1,5 @@
+from report_utils import get_years_and_months_ranges
+import report_configuration as c
 from HFRadar import HFRadar
 from pylatex import Document, Package, NoEscape, Section, Itemize
 from pylatex.base_classes import Options
@@ -43,7 +45,7 @@ class HFReportGenerator:
         self.doc.append(NoEscape(r''))
         self.doc.append(NoEscape(r'\vspace{1cm}'))
         self.doc.append(NoEscape(r''))
-        self.doc.append(NoEscape(r'\includegraphics[height=1.5cm]{logo_socib.eps}'))
+        self.doc.append(NoEscape(r'\includegraphics[height=1.5cm]{' + c.settings.socib_logo_path + r'}'))
         self.doc.append(NoEscape(r''))
         self.doc.append(NoEscape(r'\vspace{1cm}'))
         self.doc.append(NoEscape(r''))
@@ -93,7 +95,7 @@ class HFReportGenerator:
                                           r'\setlength{\unitlength}{1cm}\setlength{\parindent}{0pt}'
                                           r'\parskip 0.25cm\setcounter{tocdepth}{2}'
                                           r'\fancyhf{}\lhead{ \fancyplain{}{\hspace{-1.cm}'
-                                          r'\includegraphics[height=1.25cm]{logo_socib.eps}} }'
+                                          r'\includegraphics[height=1.25cm]{' + c.settings.socib_logo_path + r'}} }'
                                           r'\cfoot{\hspace*{.9\textwidth}\sffamily \bfseries '
                                           r'\thepage\ / \pageref{LastPage}}\renewcommand{\headrulewidth}{0pt}  '
                                           r'\fancyfoot[L]{    '
@@ -104,7 +106,8 @@ class HFReportGenerator:
                                           r'\fancyfootoffset{0.2\textwidth}'))
 
     def set_up_document(self):
-        self.doc = Document('SOCIB_HFRadar_Report' + str(self.year) + str(self.month).zfill(2))
+        self.doc = Document(c.settings.document_output_directory + 'SOCIB_HFRadar_Report' + str(self.year) +
+                            str(self.month).zfill(2))
         self.write_header_preamble()
         self.write_title_page()
         self.doc.append(NoEscape(r'\pagebreak'))
@@ -119,10 +122,24 @@ def main():
     Requires year and month as input parameters.
     year: YYYY
     month: MM
-
-    Example: python main 2016 3
+    Example:
+        python main 2016 3
+    OR
+        python main 2013 2016 8 7
+        will process all monts in the timespan
     """
-    HFReportGenerator(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 3:
+        # single station
+        HFReportGenerator(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) == 5:
+        # process time span
+        years, months = get_years_and_months_ranges(*map(int, sys.argv[1:5]))
+        for i in range(0, len(years)):
+            try:
+                HFReportGenerator(years[i], months[i])
+            except RuntimeError:
+                continue
+
 
 if __name__ == "__main__":
     main()
