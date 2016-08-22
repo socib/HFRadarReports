@@ -14,8 +14,6 @@ from pylatex import Figure, NoEscape, Table, Tabular, MultiColumn, MultiRow
 from mpl_toolkits.basemap import Basemap
 from scipy import signal, fft, interpolate
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-# noinspection PyUnresolvedReferences
-from ttide.t_tide import t_tide
 from matplotlib.patches import Ellipse
 import calendar
 from oct2py import octave
@@ -29,7 +27,7 @@ from okean import gshhs
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-handler = logging.FileHandler('Utils.log')
+handler = logging.FileHandler(c.settings.logging_path)
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s p%(process)s {%(pathname)s:%(lineno)d} - %(name)s -'
                               ' %(levelname)s - %(message)s')
@@ -123,7 +121,7 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
             #  intervals
             logger.info('Processing {0}, {1} ({2}, {3})'.format(cur_latitude, cur_longitude, m, n))
             try:
-                octave.addpath('/home/akrietemeyer/Documents/MATLAB/t_tide_octave/t_tide_v1.3beta')
+                octave.addpath(c.settings.octave_modified_t_tide_path)
                 # noinspection PyUnusedLocal
                 [const_names, const_freqs,
                  tide_const, prediction] = octave.t_tide(complex_u_v, 'interval', 1,  'start_time',
@@ -890,11 +888,6 @@ def linear_fill(x, y, kind=None):
     #     f = interpolate.interp1d(x, y)
     #     y_interp[missing_values] = np.interp(x[missing_values], x[good_values], y[good_values])
     return y_interp
-
-
-def get_good_data_only():
-    # TODO implement
-    pass
 
 
 def plot_quiver_direction_overlapping(doc, cur_time, lower_direction, plot_title, upper_direction, upper_amplifier=None,

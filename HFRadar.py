@@ -10,7 +10,7 @@ from pylatex import NoEscape, Section
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-handler = logging.FileHandler('HF_radar.log')
+handler = logging.FileHandler(c.settings.logging_path)
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s p%(process)s {%(pathname)s:%(lineno)d} - %(name)s - '
                               '%(levelname)s - %(message)s')

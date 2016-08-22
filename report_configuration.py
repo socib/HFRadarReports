@@ -66,6 +66,14 @@ class _Settings(object):
     def socib_logo_path(self):
         return self._socib_logo_path
 
+    @property
+    def logging_path(self):
+        return self._logging_path
+
+    @property
+    def octave_modified_t_tide_path(self):
+        return self._octave_modified_t_tide_path
+
     def __init__(self):
         self._XFMT = md.DateFormatter('%Y-%m-%d')
         self._VARIABLES_OF_INTEREST = [
@@ -107,5 +115,7 @@ class _Settings(object):
         }
         self._document_output_directory = '/home/akrietemeyer/workspace/HFRadarReport/Reports/'
         self._socib_logo_path = '/home/akrietemeyer/workspace/HFRadarReport/logo_socib.eps'
+        self._logging_path = './HFRadar.log'
+        self._octave_modified_t_tide_path = './t_tide_octave/t_tide_v1.3beta'
 
 settings = _Settings()
