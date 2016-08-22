@@ -7,6 +7,15 @@ import calendar
 import sys
 
 
+__author__ = "Andreas Krietemeyer"
+__copyright__ = "Copyright 2016, SOCIB Sistema d observacio i prediccio costaner de les Illes Balears"
+__license__ = "GNU GPL v 3"
+__version__ = "1.0"
+__maintainer__ = ["Charles Troupin", "Andreas Krietemeyer"]
+__email__ = "akrietemeyer@socib.es"
+__status__ = "Production"
+
+
 class HFReportGenerator:
     def __init__(self, year, month):
         self.year = int(year)
