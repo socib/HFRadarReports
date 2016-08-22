@@ -151,7 +151,7 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.25)
     with doc.create(Figure(position='!htbp')) as plot:
-        plot.add_plot()
+        plot.add_plot(width=NoEscape(r'1\textwidth, height=0.8\textheight, keepaspectratio'))
         plot.add_caption('Tidal Ellipses for the main tidal constituents (K1, M2 and S2) in {0} {1}.'.format(
             calendar.month_name[month], str(year)))
     plt.clf()
