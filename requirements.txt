@@ -1,0 +1,12 @@
+numpy
+pandas
+requests
+matplotlib
+pylatex
+netCDF4
+pytz
+scipy
+oct2py
+windrose
+adjustText
+git+https://github.com/martalmeida/okean.git#egg=okean

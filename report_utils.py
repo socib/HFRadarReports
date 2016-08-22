@@ -74,10 +74,6 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
     axes[1].set_title(desired_constituents[1])
     axes[2].set_title(desired_constituents[2])
 
-
-
-    # basemaps = [Basemap(projection='cyl', llcrnrlat=38.35, urcrnrlat=39.05, llcrnrlon=0.55, urcrnrlon=1.45,
-    #                     lat_ts=35., resolution='h', ax=axes[0])]
     x, y = gshhs.get_coastline(xlim=[0.55, 1.45], ylim=[38.35, 39.05], res='f')
     for a in axes:
         a.plot(x, y, 'k')
@@ -86,13 +82,6 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
         a.set(adjustable='box-forced', aspect='equal')
         a.set_ylabel('$^{\circ}$N', rotation=0, horizontalalignment='right')
         a.set_xlabel('$^{\circ}$E')
-    # longrid, latgrid = basemaps[0](np_longrid, np_latgrid)
-    #
-    # for cur_map in basemaps:
-    #     cur_map.drawcoastlines(linewidth=.25, zorder=4)
-    #     cur_map.drawmapboundary(fill_color='white')
-    #     cur_map.drawparallels(np.arange(30., 40., 1.), labels=[True, False, True, False], zorder=2)
-    #     cur_map.drawmeridians(np.arange(-10., 2., 1.), labels=[False, True, False, True], zorder=2)
     for m in range(0, general_shape[1]):
         cur_latitude = latitude_array[m]
         for n in range(0, general_shape[2]):
@@ -112,8 +101,6 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
                 logger.info('>60% NaNs found (index {0}, {1})'
                             ' - U NaNs: {2:.2g}%, V NaNs: {3:.2f}%'.format(m, n, u_percent_nan, v_percent_nan))
                 continue
-            # cur_u = cur_u - np.nanmean(cur_u)
-            # cur_v = cur_v - np.nanmean(cur_v)
             cur_u_interpolated = linear_fill(cur_time, cur_u)
             cur_v_interpolated = linear_fill(cur_time, cur_v)
             complex_u_v = cur_u_interpolated + 1j * cur_v_interpolated
