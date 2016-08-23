@@ -49,7 +49,7 @@ class HFRadar:
                                              'hf-radar-ibiza_scb-codarssproc001', self.year, self.month)
         try:
             self.root = Dataset(self.link)
-        except RuntimeError:
+        except (RuntimeError, IOError):
             logger.error('File does not exist. ' + self.link, exc_info=False)
         buoy_definitions = c.settings.buoy_paths
         buoy_links = []
