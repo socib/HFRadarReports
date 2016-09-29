@@ -24,7 +24,7 @@ class HFReportGenerator:
         self.doc = None
         self.set_up_document()
         HFRadar(self.year, self.month, self.doc)
-        # self.doc.generate_tex()
+        #self.doc.generate_tex()
         self.doc.generate_pdf(extra_compiler_args='--xelatex')
 
     def write_introduction(self):
@@ -144,10 +144,7 @@ def main():
         # process time span
         years, months = get_years_and_months_ranges(*map(int, sys.argv[1:5]))
         for i in range(0, len(years)):
-            try:
-                HFReportGenerator(years[i], months[i])
-            except RuntimeError:
-                continue
+            HFReportGenerator(years[i], months[i])
 
 
 if __name__ == "__main__":

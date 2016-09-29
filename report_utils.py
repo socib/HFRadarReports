@@ -24,8 +24,6 @@ from okean import gshhs
 
 # Command does not really work currently, but let's keep it if we use a similar approach later
 # mp.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
-
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 handler = logging.FileHandler(c.settings.logging_path)
 handler.setLevel(logging.INFO)
@@ -33,7 +31,6 @@ formatter = logging.Formatter('%(asctime)s p%(process)s {%(pathname)s:%(lineno)d
                               ' %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
 
 def get_years_and_months_ranges(start_year, end_year, start_month, end_month):
     year_difference = end_year - start_year
@@ -108,12 +105,12 @@ def t_tide_harmonic_analysis(doc, u_data, v_data, cur_time, year, month, latitud
             #  intervals
             logger.info('Processing {0}, {1} ({2}, {3})'.format(cur_latitude, cur_longitude, m, n))
             try:
+                logger.info('Calling octave t_tide...')
                 octave.addpath(c.settings.octave_modified_t_tide_path)
-                # noinspection PyUnusedLocal
-                [const_names, const_freqs,
-                 tide_const, prediction] = octave.t_tide(complex_u_v, 'interval', 1,  'start_time',
-                                                         get_md_datenum(cur_time)[0], 'latitude', cur_latitude,
-                                                         'output', 'none')
+                const_names, const_freqs, tide_const, prediction = octave.t_tide(
+                    complex_u_v, 'interval', 1,  'start_time',
+                    get_md_datenum(cur_time)[0], 'latitude', cur_latitude,
+                    'output', 'none')
                 # In case the python t_tide implementation should be used:
                 # const_names, const_freqs, tide_const, prediction = t_tide(complex_u_v, dt=1,
                 #                                                           stime=get_md_datenum(cur_time)[0],
@@ -369,15 +366,24 @@ def compute_u_v_components(direction, spe=None):
 
 
 def get_title_name(variable):
+    """
+    Get the variable name
+    :param variable:
+    :bug when using concatenated files with MFDataset
+    :mf = MFDataset(files); var_mf = mf.variables['time']
+    :ds = Dataset(Files);   var_ds = ds.variables['time']
+    :dir(var_mf) [..............'_name']
+    :dir(var_ds) [...'name'..., '_name']
+    """
     try:
-        title_name = variable.long_name + ' (' + variable.name + ')'
+        title_name = variable.long_name + ' (' + variable._name + ')'
     except AttributeError:
-        logger.info(variable.name + ' has no long name.')
+        logger.info(variable._name + ' has no long name.')
         try:
-            title_name = variable.standard_name + ' (' + variable.name + ')'
+            title_name = variable.standard_name + ' (' + variable._name + ')'
         except AttributeError:
-            logger.info(variable.name + ' has no standard name.')
-            title_name = variable.name
+            logger.info(variable._name + ' has no standard name.')
+            title_name = variable._name
     return title_name
 
 
@@ -899,7 +905,7 @@ def plot_quiver_direction_overlapping(doc, cur_time, lower_direction, plot_title
     else:
         my_title = 'Evolution of ' + plot_title + ' at ' + s_name + ' in ' + month_title + '.'
     if np.all(np.isnan(lower_direction)) or np.all(np.isnan(upper_direction)):
-        print 'Only NaNs found at ' + plot_title
+        print ('Only NaNs found at ' + plot_title)
         doc.append('Only NaNs encountered at one of the plots from ' + plot_title)
         return
     if upper_amplifier is not None:
@@ -1531,6 +1537,27 @@ def get_thredds_opendap_link(folder, sub_folder, processing_level, prefix, stati
            str(month).zfill(2) + '.nc'
     return link
 
+def get_thredds_catalog_folder_content(folder, sub_folder, processing_level, prefix, station_name, year):
+    """
+
+    :param station_name: string
+    :param folder: string
+    :param sub_folder: string
+    :param processing_level: int
+    :param prefix: string
+    :param year: int
+    :param month: int
+    :return: string
+
+    example:
+        get_thredds_opendap_link('hf_radar', 'hf_radar_ibiza-scb_codarssproc001', 1, 'dep0001',
+        'hf-radar-ibiza-scb_codarssproc001', 2016, 4)
+    """
+    str_processing_level = 'L' + str(processing_level)
+    #http://thredds.socib.es/thredds/catalog/mooring/currentmeter/buoy_canaldeibiza-scb_dcs002/L1/2016/catalog.html
+    link = 'http://thredds.socib.es/thredds/catalog/' + folder + '/' + sub_folder + '/' + str_processing_level + '/' + \
+            str(year) + '/catalog.html' 
+    return link
 
 def create_netcdf_link(jwebchart_link):
     start_idx = jwebchart_link.find('?file=')
@@ -1583,7 +1610,7 @@ def get_instrument_list(input_id):
     try:
         r = requests.get(link)
     except ValueError:
-        print 'Cannot open ', link
+        print ('Cannot open ' + link)
     json = r.json()
     platform_name = json["name"]
     platform_type = json["platformType"]
@@ -1600,11 +1627,7 @@ def get_data_array(data_array):
     returns pure data in NetCDF variable (without mask)
     :param data_array: NetCDF Variable
     :return: data array (just [xxx])
-    """
-    if type(data_array.__array__()) is np.ma.masked_array:
-        return data_array.__array__().data
-    else:
-        return data_array.__array__()
+    return np.ma.filled(data_array[:])
 
 
 def convert_time(cur_time):
@@ -1720,7 +1743,7 @@ def plot_1d(doc, x_axis, data, y_label, plot_title, qc_data=None, s_name=None, x
     else:
         my_title = 'Evolution of ' + plot_title + ' at ' + s_name + ' in ' + month_title + '.'
     if np.all(np.isnan(data)):
-        print 'Only NaN occured at 1D ' + plot_title
+        print ('Only NaN occured at 1D ' + plot_title)
         doc.append(('NaN values at ' + plot_title + '.'))
         return
     with doc.create(Figure(position='htbp')) as plot:
@@ -1734,7 +1757,7 @@ def plot_1d(doc, x_axis, data, y_label, plot_title, qc_data=None, s_name=None, x
             pass
         else:
             if np.all(np.isnan(qc_data)):
-                print 'QC data is set, but everything is NaN. Here we have a processing problem. ' + plot_title
+                print ('QC data is set, but everything is NaN. Here we have a processing problem. ' + plot_title)
                 doc.append(('NaN values at QC of ' + plot_title + '. Should not happen.'))
                 plt.gcf().autofmt_xdate()
                 plt.gcf().set_size_inches(11, 3)
@@ -1791,8 +1814,8 @@ def plot_2d(doc, x_axis, data, second_dimension, y_label, plot_title, qc_data=No
         plt.figure()
         for x in range(len(second_dimension)):
             if np.all(np.isnan(data)):
-                print 'Only NaN occured at 2D ' + plot_title
-                doc.append(('Only NaN values at ' + plot_title + '.'))
+                print ('Only NaN occured at 2D ' + plot_title)
+                doc.append('Only NaN values at ' + plot_title + '.')
                 continue
             plt.plot(x_axis, data[:, x], color='k', linewidth=0.5)
         plt.gca().set_ylabel(y_label, rotation=0, horizontalalignment='right')
@@ -1841,7 +1864,7 @@ def plot_quiver_direction(doc, cur_time, direction, plot_title, amplifier=None, 
     else:
         my_title = 'Evolution of ' + plot_title + ' at ' + s_name + ' in ' + month_title + '.'
     if np.all(np.isnan(direction)):
-        print 'Only NaNs found at ' + plot_title
+        print ('Only NaNs found at ' + plot_title)
         doc.append('Only NaNs encountered at ' + plot_title)
         return
     if amplifier is not None:
@@ -1886,7 +1909,7 @@ def normalize_data(amplifier, method=None):
     elif method == 'std':
         out = [(v-cur_mean)/cur_std for v in np.nditer(amplifier)]
     else:
-        print 'Normalization method not defined.'
+        print ('Normalization method not defined.')
         return 1
     out = np.asarray(out)
     return out
@@ -1942,5 +1965,7 @@ class Timer(object):
 
     def __exit__(self, type, value, traceback):
         if self.name:
-            print '[%s]' % self.name,
-        print 'Elapsed: %s' % (time.time() - self.tstart)
+            print ('[%s]' % self.name)
+        print ('Elapsed: %s' % (time.time() - self.tstart))
+        
+

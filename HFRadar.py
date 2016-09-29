@@ -1,5 +1,6 @@
 from report_utils import *
 from netCDF4 import Dataset
+from netCDF4 import MFDataset
 import report_configuration as c
 import numpy as np
 import logging
@@ -7,6 +8,10 @@ import pytz
 import calendar
 from datetime import timedelta
 from pylatex import NoEscape, Section
+
+from urllib2 import urlopen
+import re
+import glob
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,6 +38,8 @@ class HFRadar:
         self.closest_lon_idx = []
         self.lat = []
         self.lon = []
+        self.buoy_lat = []
+        self.buoy_lon = []
         self.time = []
         self.ibiz_avail = []
         self.lat_lon_percent = []
@@ -57,16 +64,15 @@ class HFRadar:
             cur_folder = buoy_definitions['folder'][i]
             cur_sub_folder = buoy_definitions['sub_folder'][i]
             cur_station_name = buoy_definitions['station_name'][i]
-            for j in range(1, 9):
-                buoy_links.append(get_thredds_opendap_link(cur_folder, cur_sub_folder, 1, 'dep000' + str(j),
-                                                           cur_station_name, self.year, self.month))
-        for cur_buoy_link in buoy_links:
+            globString = "/data/current/opendap/observational/mooring/currentmeter/" + cur_sub_folder + "/L1/" + str(self.year) + "/*" + str(self.year) + "-" + str(self.month).zfill(2) + ".nc"
+            opendapContents = glob.glob(globString)
+            logger.info('FILE LIST ' + str(opendapContents))
+            if opendapContents is None or not opendapContents:
+                continue
             try:
-                # Will stop trying after the first dataset is found. No merging of different datasets performed.
-                self.buoy_root = Dataset(cur_buoy_link)
-                break
+                self.buoy_root = MFDataset(globString)
             except RuntimeError:
-                logger.info('File does not exist. ' + cur_buoy_link, exc_info=False)
+                logger.info('Dataset Runtime Error. ', exc_info=False)
         if self.buoy_root is None:
             logger.error('No buoy root loaded for {0} {1}. Will skip this month.'.format(self.year, self.month))
             raise RuntimeError('Check the buoy input. Dataset with month/year file may not exist.')
@@ -86,6 +92,10 @@ class HFRadar:
     def read_buoy_variable(self, var_name):
         try:
             self.buoy_variables[var_name] = self.buoy_root.variables[var_name]
+            if var_name == 'LAT':
+                self.buoy_lat = get_data_array(self.buoy_variables[var_name])
+            elif var_name == 'LON':
+                self.buoy_lon = get_data_array(self.buoy_variables[var_name])
         except RuntimeError:
             logger.error('No variable exists with that name: ' + var_name, exc_info=True)
 
@@ -94,6 +104,7 @@ class HFRadar:
             self.read_variable(var_name)
         for var_name in c.settings.buoy_variables_of_interest:
             self.read_buoy_variable(var_name)
+        self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, self.buoy_lat, self.buoy_lon)
 
     def convert_time(self):
         dates = [datetime.fromtimestamp(ts, tz=pytz.utc) for ts in self.time]
@@ -126,7 +137,8 @@ class HFRadar:
                     ['Threshold Graphs', self.create_threshold_graphs],
                     ['Histogram Radial Files per 10 Days', self.create_histogram],
                     ['Tidal Analysis', self.harmonic_analysis],
-                    ['Energy Spectra', self.create_power_spectrum]
+                    ['Energy Spectra', self.create_power_spectrum],
+                    ['Acknowledgement', self.say_thanks]
                    ]
         for section in sections:
             self.write_section(section[0], section[1])
@@ -137,12 +149,8 @@ class HFRadar:
         u_mean = get_temporal_mean_from_grid(get_data_array(self.variables["U"]))
         v_mean = get_temporal_mean_from_grid(get_data_array(self.variables["V"]))
         np_longrid, np_langrid = np.meshgrid(self.lon, self.lat)
-
-        buoy_lat, buoy_lon = get_data_array(self.buoy_variables["LAT"]), get_data_array(self.buoy_variables["LON"])
-        self.closest_lat_idx, self.closest_lon_idx = get_idx_closest_grid_point(self.lat, self.lon, buoy_lat, buoy_lon)
-
         hf_monthly_mean_direction_plot(self.doc, u_mean, v_mean, np_longrid, np_langrid, self.high_res_basemap,
-                                       buoy_lat, buoy_lon)
+                                       self.buoy_lat, self.buoy_lon)
         # For debugging purposes
         # hf_plot_grid_and_buoy_position(np_langrid, np_longrid, buoy_lat, buoy_lon,
         #                                self.lat[self.closest_lat_idx], self.lon[self.closest_lon_idx])
@@ -562,3 +570,10 @@ class HFRadar:
         np_longrid, np_latgrid = np.meshgrid(self.lon, self.lat)
         t_tide_harmonic_analysis(self.doc, cur_u, cur_v, self.time, self.year, self.month, self.lat, self.lon, qc_u,
                                  qc_v, wspe_dir, wspe, np_longrid, np_latgrid)
+        
+    def say_thanks(self):
+        self.doc.append('This report is a SOCIB Data Centre contribution to new HF radar procedures for'
+                        ' data quality control developed in the framework of JERICO NEXT project.'
+                        ' We are particularly grateful to Puertos del Estado for the initial ideas and inspiring guidance'
+                        ' in the edition of QUID (Quality information Document) at monthly basis.')
+
