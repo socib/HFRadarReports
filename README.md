@@ -43,5 +43,6 @@ Last but not least, to start processing, run the reportGeneratorHFRadar.py (see 
 
 ## Usage
 There are two possibilities to use the tool:
+
 1. Specify the year and month of the reportGeneratorHFRadar.py to process the month (i.e. `python reportGeneratorHFRadar.py 2016 7`)
 2. Specify the timespan you want to process of the reportGeneratorHFRadar.py to process the timespan (i.e. `python reportGeneratorHFRadar.py 2015 2016 2 7` will process all monthly datasets between February 2015 and July 2016)
