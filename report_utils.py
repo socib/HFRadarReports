@@ -1627,6 +1627,7 @@ def get_data_array(data_array):
     returns pure data in NetCDF variable (without mask)
     :param data_array: NetCDF Variable
     :return: data array (just [xxx])
+    """
     return np.ma.filled(data_array[:])
 
 
