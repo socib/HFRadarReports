@@ -1,4 +1,5 @@
 import matplotlib.dates as md
+import os 
 
 
 class _Settings(object):
@@ -113,8 +114,14 @@ class _Settings(object):
             'sub_folder': ['buoy_canaldeibiza-scb_dcs002', 'buoy_canaldeibiza-scb_fsi002'],
             'station_name': ['buoy-canaldeibiza_scb-dcs002', 'buoy-canaldeibiza_scb-fsi002']
         }
+        
+        working_directory = os.getcwd()
+
+        if not os.path.exists(os.path.join(working_directory, 'Reports')):
+            os.makedirs(os.path.join(working_directory, 'Reports'))
+        
         self._document_output_directory = 'Reports/'
-        self._socib_logo_path = 'logo_socib.eps'
+        self._socib_logo_path = '{}/logo_socib.eps'.format(working_directory)
         self._logging_path = 'HFRadar.log'
         self._octave_modified_t_tide_path = 't_tide_octave'
 
