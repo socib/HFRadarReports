@@ -74,6 +74,10 @@ class _Settings(object):
     def octave_modified_t_tide_path(self):
         return self._octave_modified_t_tide_path
 
+    def prepare_output_directory(self, working_directory):
+        self._document_output_directory = '{}/Reports/'.format(working_directory)
+        self._socib_logo_path = '{}/logo_socib.eps'.format(working_directory)
+
     def __init__(self):
         self._XFMT = md.DateFormatter('%Y-%m-%d')
         self._VARIABLES_OF_INTEREST = [
@@ -113,8 +117,7 @@ class _Settings(object):
             'sub_folder': ['buoy_canaldeibiza-scb_dcs002', 'buoy_canaldeibiza-scb_fsi002'],
             'station_name': ['buoy-canaldeibiza_scb-dcs002', 'buoy-canaldeibiza_scb-fsi002']
         }
-        self._document_output_directory = 'Reports/'
-        self._socib_logo_path = 'logo_socib.eps'
+
         self._logging_path = 'HFRadar.log'
         self._octave_modified_t_tide_path = 't_tide_octave'
 

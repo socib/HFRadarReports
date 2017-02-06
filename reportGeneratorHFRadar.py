@@ -5,6 +5,7 @@ from pylatex import Document, Package, NoEscape, Section, Itemize
 from pylatex.base_classes import Options
 import calendar
 import sys
+import os
 
 
 __author__ = "Andreas Krietemeyer"
@@ -137,6 +138,14 @@ def main():
         python main 2013 2016 8 7
         will process all monts in the timespan
     """
+
+    #create output directory
+    if not os.path.exists(os.path.join(os.getcwd(), 'Reports')):
+        os.makedirs(os.path.join(os.getcwd(), 'Reports'))
+
+    #pass current working directory to configuration file
+    c.settings.prepare_output_directory(os.getcwd())
+
     if len(sys.argv) == 3:
         # single station
         HFReportGenerator(sys.argv[1], sys.argv[2])
@@ -145,6 +154,8 @@ def main():
         years, months = get_years_and_months_ranges(*map(int, sys.argv[1:5]))
         for i in range(0, len(years)):
             HFReportGenerator(years[i], months[i])
+    else:
+        print("Not enough arguments supplied")
 
 
 if __name__ == "__main__":
