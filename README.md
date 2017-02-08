@@ -6,6 +6,10 @@ The automatic data processing includes:
 - Monthly means of the direction vectors, statistics (time series and data tables). 
 - Comparisons of the horizontal current components derived from HF radar and the pointwise subsurface currents from the currentmeter (1.5 m) deployed in the Ibiza Channel (at location 38º49.46 N and 0º47.02 W), which allow us to evaluate the radar performance and identify temporal periods or malfunctioning of the radar (or of the current-meter).
 
+# Docker 
+
+You can now run the tool via Docker.  Instructions [Here](https://github.com/socib/HFRadarReports-Docker)
+
 **Note:** figures use the oceanographic convention: currents pointing in the direction of the flow.
 
 ## Dependencies
