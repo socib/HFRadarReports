@@ -45,6 +45,7 @@ class HFRadar:
         self.lat_lon_percent = []
         self.variables = {}
         self.buoy_variables = {}
+        self.buoy_data_available = True
         self.get_root()
         self.high_res_basemap = get_basemap('h')
         self.get_variables()
@@ -74,8 +75,8 @@ class HFRadar:
             except RuntimeError:
                 logger.info('Dataset Runtime Error. ', exc_info=False)
         if self.buoy_root is None:
-            logger.error('No buoy root loaded for {0} {1}. Will skip this month.'.format(self.year, self.month))
-            raise RuntimeError('Check the buoy input. Dataset with month/year file may not exist.')
+            logger.error('No buoy root loaded for {0} {1}. Will skip this month. Check the buoy input. Dataset with month/year file may not exist.'.format(self.year, self.month))
+            self.buoy_data_available = False
 
     def read_variable(self, var_name):
         try:
@@ -112,6 +113,8 @@ class HFRadar:
         self.x_limits = get_x_limits(self.time[0])
 
     def write_section(self, title, func):
+	if not func:
+            return
         with self.doc.create(Section(title)):
             func()
             # very dirty workaround
@@ -128,7 +131,7 @@ class HFRadar:
                     ['Temporal Availability', self.temporal_availability],
                     ['Time Series of HFR at the nearest point of Ibiza Channel Buoy', self.timeseries_at_buoy_ibiza],
                     ['Data Tables of HFR data statistics at the nearest point of Ibiza Channel Buoy', self.tables_at_buoy_ibiza],
-                    ['Comparison between HF Radar and Current Measurements', self.comparison_radar_buoy],
+                    ['Comparison between HF Radar and Current Measurements', self.comparison_radar_buoy if self.buoy_data_available else None],
                     ['Spatially Averaged Surface Current Variance', self.spatially_averaged_surface_current_variance],
                     ['Spatial Distribution of the Temporal Coverage', self.spatial_availability],
                     ['Spatial Coverage vs. Temporal Coverage', self.spatial_and_temporal_availability],
