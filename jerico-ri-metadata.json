@@ -1,59 +1,58 @@
 {
-    "_class": "Software",
-    "alias": "https://github.com/socib/HFRadarReports",
-    "abstract": "A Python toolbox to automatically generate the QI reports of the HFR-Ibiza system, operated by SOCIB.",
-    "author": {
-        "_class": "Organization",
-        "alias": "https://edmo.seadatanet.org/report/3410"
-    },
-    "created": "2016-06-17",
-    "contributor": [
-        {
-            "_class": "Person",
-            "name": "Andreas Krietemeyer"
-        },
-        {
-            "_class": "Person",
-            "name": "Charles Troupin"
-        },
-            {
-            "_class": "Person",
-            "name": "Emma Reyes <ereyes@socib.es>"
-        },
-        {
-            "_class": "Person",
-            "name": "Grant Rogers"
-        },
-        {
-            "_class": "Person",
-            "name": "Juan Gabriel Fernandez <jfernandez@socib.es>"
-        }
-    ],
-    "description": "The SOCIB HF-Radar Automatic Report Generator is a set of Python/Octave/LaTex scripts developed at SOCIB to automatically generate the monthly quality information reports of the SOCIB-HF Radar system of the Ibiza Channel, based on the information available in the SOCIB THREDDS Data Server (TDS) Catalog. These reports aim to extract useful and meaningful information from the HF radar data using qualitative and quantitative data analysis methods, being publicly available at https://www.socib.es/?seccion=observingFacilities&facility=radar#reports."
-    "distribution": {
-        "_class": "Distribution",
-        "accessURL": "https://github.com/socib/HFRadarReports"
-    },
-    "downloadURL": "https://github.com/socib/HFRadarReports/archive/refs/heads/master.zip",
-    "keywords": ["python","netcdf","octave","latex","high-frequency-radar","ibiza-channel","docker","ocean-sciences","remote-sensing","quality-information","HFRadarReports","socib", "jerico-ri"],
-    "language": ["English"],
-    "license": "Copyright (C) 2016 ICTS SOCIB - SOCIB Sistema d observacio i prediccio costaner de les Illes Balears, http://www.socib.es\n\nThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.",
-    "modified": "2018-11-24",
-    "name": "SOCIB HF-Radar Automatic Report Generator",
-    "organization": {
-        "_class": "Organization",
-        "alias": "https://edmo.seadatanet.org/report/3410"
-    },
-    "owner": {
-        "_class": "Organization",
-        "alias": "https://edmo.seadatanet.org/report/3410"
-    },
-    "publisher": {
-        "_class": "Organization",
-        "alias": "https://edmo.seadatanet.org/report/3410"
-    },
-    "published": "2016-06-17",
-    "programming_language": ["PYTHON", "OCTAVE", "LATEX", "Other"],
-    "url": "https://github.com/socib/HFRadarReports",
-    "version": "v1.1"
-}
+ 	"_class": "Software",
+ 	"alias": "https://github.com/socib/HFRadarReports",
+ 	"abstract": "A Python toolbox to automatically generate the QI reports of the HFR-Ibiza system, operated by SOCIB.",
+ 	"author": {
+ 		"_class": "Organization",
+ 		"alias": "https://edmo.seadatanet.org/report/3410"
+ 	},
+ 	"created": "2016-06-17",
+ 	"contributor": [{
+ 			"_class": "Person",
+ 			"name": "Andreas Krietemeyer"
+ 		},
+ 		{
+ 			"_class": "Person",
+ 			"name": "Charles Troupin"
+ 		},
+ 		{
+ 			"_class": "Person",
+ 			"name": "Emma Reyes <ereyes@socib.es>"
+ 		},
+ 		{
+ 			"_class": "Person",
+ 			"name": "Grant Rogers"
+ 		},
+ 		{
+ 			"_class": "Person",
+ 			"name": "Juan Gabriel Fernandez <jfernandez@socib.es>"
+ 		}
+ 	],
+ 	"description": "The SOCIB HF-Radar Automatic Report Generator is a set of Python/Octave/LaTex scripts developed at SOCIB to automatically generate the monthly quality information reports of the SOCIB-HF Radar system of the Ibiza Channel, based on the information available in the SOCIB THREDDS Data Server (TDS) Catalog. These reports aim to extract useful and meaningful information from the HF radar data using qualitative and quantitative data analysis methods, being publicly available at https://www.socib.es/?seccion=observingFacilities&facility=radar#reports.",
+ 	"distribution": {
+ 		"_class": "Distribution",
+ 		"accessURL": "https://github.com/socib/HFRadarReports"
+ 	},
+ 	"downloadURL": "https://github.com/socib/HFRadarReports/archive/refs/heads/master.zip",
+ 	"keywords": ["python", "netcdf", "octave", "latex", "high-frequency-radar", "ibiza-channel", "docker", "ocean-sciences", "remote-sensing", "quality-information", "HFRadarReports", "socib", "jerico-ri"],
+ 	"language": ["English"],
+ 	"license": "Copyright (C) 2016 ICTS SOCIB - SOCIB Sistema d observacio i prediccio costaner de les Illes Balears, http://www.socib.es\n\nThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.",
+ 	"modified": "2018-11-24",
+ 	"name": "SOCIB HF-Radar Automatic Report Generator",
+ 	"organization": {
+ 		"_class": "Organization",
+ 		"alias": "https://edmo.seadatanet.org/report/3410"
+ 	},
+ 	"owner": {
+ 		"_class": "Organization",
+ 		"alias": "https://edmo.seadatanet.org/report/3410"
+ 	},
+ 	"publisher": {
+ 		"_class": "Organization",
+ 		"alias": "https://edmo.seadatanet.org/report/3410"
+ 	},
+ 	"published": "2016-06-17",
+ 	"programming_language": ["PYTHON", "OCTAVE", "LATEX", "Other"],
+ 	"url": "https://github.com/socib/HFRadarReports",
+ 	"version": "v1.1"
+ }
